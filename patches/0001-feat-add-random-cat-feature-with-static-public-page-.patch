@@ -1,0 +1,84 @@
+From f5a510dd89ed8d77efe1e706478bfe5984093d13 Mon Sep 17 00:00:00 2001
+From: OpenClaw Bot <openclaw@example.local>
+Date: Tue, 24 Feb 2026 21:04:53 +0000
+Subject: [PATCH 1/2] feat: add random cat feature with static public page and
+ /api/cat
+
+---
+ public/index.html | 22 ++++++++++++++++++++++
+ src/index.js      | 19 ++++++++++++++++++-
+ 2 files changed, 40 insertions(+), 1 deletion(-)
+ create mode 100644 public/index.html
+
+diff --git a/public/index.html b/public/index.html
+new file mode 100644
+index 0000000..ab6d218
+--- /dev/null
++++ b/public/index.html
+@@ -0,0 +1,22 @@
++<!doctype html>
++<html>
++  <head>
++    <meta charset="utf-8" />
++    <title>Random Cat</title>
++  </head>
++  <body>
++    <h1>Random Cat</h1>
++    <button id="btn">Get Random Cat</button>
++    <div>
++      <img id="cat" src="" alt="Random cat" style="max-width:600px; display:block; margin-top:20px;" />
++    </div>
++    <script>
++      document.getElementById('btn').addEventListener('click', async () => {
++        const res = await fetch('/api/cat');
++        const data = await res.json();
++        const img = document.getElementById('cat');
++        img.src = data.url;
++      });
++    </script>
++  </body>
++</html>
+diff --git a/src/index.js b/src/index.js
+index 3dd5055..2a30bdc 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -2,6 +2,8 @@ const express = require('express');
+ const app = express();
+ const port = process.env.PORT || 3000;
+ 
++app.use(express.static('public'));
++
+ app.get('/', (req, res) => {
+   res.send("Welcome to Minou's App!");
+ });
+@@ -10,10 +12,25 @@ app.get('/health', (req, res) => {
+   res.json({ status: 'OK', time: new Date().toISOString() });
+ });
+ 
++app.get('/api/cat', async (req, res) => {
++  try {
++    const r = await fetch('https://api.thecatapi.com/v1/images/search');
++    const j = await r.json();
++    if (Array.isArray(j) && j.length > 0) {
++      res.json({ url: j[0].url });
++    } else {
++      res.status(502).json({ error: 'Invalid response from cat API' });
++    }
++  } catch (err) {
++    console.error(err);
++    res.status(500).json({ error: 'Failed to fetch cat' });
++  }
++});
++
+ if (require.main === module) {
+   app.listen(port, () => {
+     console.log(`MyTestApp listening at http://localhost:${port}`);
+   });
+ }
+ 
+-module.exports = app;
+\ No newline at end of file
++module.exports = app;
+-- 
+2.39.5
+
